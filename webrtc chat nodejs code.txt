@@ -1,0 +1,108 @@
+// const express = require('express');
+// const http = require('http');
+// const WebSocket = require('ws');
+// const app = express();
+// const connection = http.createServer(app);
+// // const wss = new WebSocket.Server({ server });
+// const server = new WebSocket.Server(connection);
+
+// server.on('connection', (socket, request) => {
+//   const userId = new URLSearchParams(request.url).get('userId');
+//   console.log(`WebSocket connection established for user ${userId}`);
+
+//   socket.on('message', (message) => {
+//     console.log(`Received message from user ${userId}: ${message}`);
+//   });
+
+//   socket.on('close', () => {
+//     console.log(`WebSocket connection closed for user ${userId}`);
+//   });
+// });
+
+//   app.get('/', (req, res) => {
+//     res.send('Hello, World!');
+//   });
+  
+//   app.listen(3000, () => {
+//     console.log('Server listening on port 3000');
+//   });
+
+
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const cors = require('cors');
+const url = require('url');
+const corsOptions = {
+  origin: 'http://localhost:4200/'
+};
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+//  -------------- socket part -------------
+
+wss.on('connection', (socket,request) => {
+
+  const userDetail = url.parse(request.url, true).query;
+  const userId = userDetail.userId;
+  socket.id = userId;
+  console.log(`WebSocket connection established for user ${userId}`)
+
+  socket.on('message', (message) => {
+    console.log(`Received message from user ${userId}: ${message}`);
+    // socket.send(message);
+    // -------- for normal message type --------
+    // {
+    //   fromUserName:'',
+    //   toUserName:'',
+    //   fromUserId:'',
+    //   toUserId:'',
+    //   msgType:'NORMAL',// for now it is normal messag for chat is should be other types like meeting,meetingroom etc,.
+    //   msgContent:msg,
+    //   dateofsended:new Date()
+    // }
+    let Message = JSON.parse(message)
+
+    
+    // if()
+    // {
+      
+    // }
+    wss.clients.forEach(element => {
+    console.log(Message.toUserId)
+      // console.log(element.id);
+    })   
+    // socket.send(message);
+  });
+
+  socket.on('close', () => {
+    console.log(`WebSocket connection closed for user ${userId}`);
+  });
+});
+
+
+// ------------- server part --------------
+
+app.use(cors(corsOptions));
+
+app.get('/', (req, res) => {
+  res.send('Hello, World!');
+});
+
+server.listen(3000, () => {
+  console.log('Server listening on port 3000');
+});
+
+
+// -------------
+// packages ---> express , cors , ws , nodemon
+
+
+
+
+
+
+
+
