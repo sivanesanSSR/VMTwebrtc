@@ -50,31 +50,65 @@ wss.on('connection', (socket,request) => {
   socket.id = userId;
   console.log(`WebSocket connection established for user ${userId}`)
 
+
+  // ws.on('message', function message(data, isBinary) {
+  //   wss.clients.forEach(function each(client) {
+  //     if (client.readyState === WebSocket.OPEN) {
+  //       client.send(data, { binary: isBinary });
+  //     }
+  //   });
+  // });
   socket.on('message', (message) => {
-    console.log(`Received message from user ${userId}: ${message}`);
+    // console.log(`Received message from user ${userId}: ${message}`);
+    let Message = JSON.parse(message)
     // socket.send(message);
+
     // -------- for normal message type --------
     // {
     //   fromUserName:'',
     //   toUserName:'',
     //   fromUserId:'',
     //   toUserId:'',
-    //   msgType:'NORMAL',// for now it is normal messag for chat is should be other types like meeting,meetingroom etc,.
+    //   msgType:'NORMAL', // for now it is normal messag for chat is should be other types like meeting,meetingroom etc,.
     //   msgContent:msg,
     //   dateofsended:new Date()
     // }
-    let Message = JSON.parse(message)
+    switch (Message.msgType)
+    {
+      case 'NORMAL':
+        wss.clients.forEach(function each(client) {
+          if(Message.toUserId == client.id)
+          {
+            if(client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(Message), { binary: false });
+            }
+          }
+      });
+        // wss.clients.forEach(client => {
+        //   console.log(Message.toUserId, client.id)
+        //   client.send(Message, { binary: false });
+        //   if(Message.toUserId == client.id)
+        //   {
+        //     if(client.readyState === WebSocket.OPEN) {
+        //       client.send(JSON.stringify(Message), { binary: false });
+        //     }
+        //   }
+        // }); 
+      break;
 
-    
-    // if()
-    // {
-      
-    // }
-    wss.clients.forEach(element => {
-    console.log(Message.toUserId)
-      // console.log(element.id);
-    })   
-    // socket.send(message);
+      default :
+      wss.clients.forEach(client => {
+        if(Message.toUserId == client.id)
+        {
+          if(client.readyState === WebSocket.OPEN) {
+            client.send(Message, { binary: false });
+          }
+        }
+      }); 
+      break;
+    }
+
+
   });
 
   socket.on('close', () => {
@@ -94,3 +128,7 @@ app.get('/', (req, res) => {
 server.listen(3000, () => {
   console.log('Server listening on port 3000');
 });
+
+function validate(req, res, next) {
+ 
+}
