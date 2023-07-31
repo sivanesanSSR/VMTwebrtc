@@ -1,38 +1,12 @@
-// const express = require('express');
-// const http = require('http');
-// const WebSocket = require('ws');
-// const app = express();
-// const connection = http.createServer(app);
-// // const wss = new WebSocket.Server({ server });
-// const server = new WebSocket.Server(connection);
-
-// server.on('connection', (socket, request) => {
-//   const userId = new URLSearchParams(request.url).get('userId');
-//   console.log(`WebSocket connection established for user ${userId}`);
-
-//   socket.on('message', (message) => {
-//     console.log(`Received message from user ${userId}: ${message}`);
-//   });
-
-//   socket.on('close', () => {
-//     console.log(`WebSocket connection closed for user ${userId}`);
-//   });
-// });
-
-//   app.get('/', (req, res) => {
-//     res.send('Hello, World!');
-//   });
-  
-//   app.listen(3000, () => {
-//     console.log('Server listening on port 3000');
-//   });
-
-
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
 const url = require('url');
+const mysql = require('mysql');
+const env_con = require('./config') //fetch data's form the config.js
+
+const PORT = process.env.PORT || env_con.port;
 const corsOptions = {
   origin: 'http://localhost:4200/'
 };
@@ -50,14 +24,6 @@ wss.on('connection', (socket,request) => {
   socket.id = userId;
   console.log(`WebSocket connection established for user ${userId}`)
 
-
-  // ws.on('message', function message(data, isBinary) {
-  //   wss.clients.forEach(function each(client) {
-  //     if (client.readyState === WebSocket.OPEN) {
-  //       client.send(data, { binary: isBinary });
-  //     }
-  //   });
-  // });
   socket.on('message', (message) => {
     // console.log(`Received message from user ${userId}: ${message}`);
     let Message = JSON.parse(message)
@@ -116,19 +82,76 @@ wss.on('connection', (socket,request) => {
   });
 });
 
+// ------------- db part -------------- 
 
+// --- now we are using XAMPP server for our database --- 
+// --- before start conncetion with xampp
+try{
+  var connection_data = mysql.createConnection(
+    env_con.Db_con // config.js contain db config json
+  );
+}
+catch(err)
+{
+  console.log(err)
+}
+
+
+
+// --- open db connection ---
+connection_data.connect(function(err) {
+  console.log("Connected to XAMPP Server!");
+}); 
+
+// ------------------- app code ---------------------
 // ------------- server part --------------
 
-app.use(cors(corsOptions));
+// express methods  -- get,post,put,delete
+app.post('/create-db', (req, res) => {
+  //req --> {db_name:'VMT'}
+  try{
+    if(req != undefined)
+    {
+      //sql query to create a database named  facility in XAMPP
+      if(req.db_name)
+      connection_data.query(`CREATE DATABASE ${req.db_name}`, function (err, result) {
+      //Display message in our console.
+      console.log("Database-facility is created");
+    });
+    }
+  }
+  catch(err)
+  { 
+
+  }
+  
+});
 
 app.get('/', (req, res) => {
   res.send('Hello, World!');
 });
 
-server.listen(3000, () => {
-  console.log('Server listening on port 3000');
+
+
+// -------------------------------
+app.use(cors(corsOptions)); // for cross origin resource sharing
+
+app.use(express.json());  // for parsing application/json
+// app.use(express.urlencoded({ extended: true }));
+
+
+server.listen(PORT, () => {
+  console.log('Server listening on port',PORT);
 });
 
-function validate(req, res, next) {
- 
-}
+
+
+
+
+// ---------------- learing code -------------------  
+app.get('/status', (request, response) => {
+  const status = {
+     'Status': 'Running'
+  };
+  response.send(status);
+});
